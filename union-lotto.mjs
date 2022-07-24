@@ -78,6 +78,6 @@ export async function grasp() {
   console.log(`最大概率组合：${part1.join()},${arr2[15][0]}`)
 
   // 最小概率组合
-  part1 = arr1.slice(0, 5).map(item => item[0]).sort((a, b) => a - b)
+  part1 = arr1.slice(0, 6).map(item => item[0]).sort((a, b) => a - b)
   console.log(`最小概率组合：${part1.join()},${arr2[0][0]}`)
 }
