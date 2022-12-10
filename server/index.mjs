@@ -6,6 +6,7 @@ const app = new Koa();
 app.use(apiRouter.routes())
   .use(apiRouter.allowedMethods());
 
-app.listen(8080, () => {
-  console.log('server started, listening at port 8080');
+const port = 5000;
+app.listen(port, () => {
+  console.log(`server started, listening at port ${port}`);
 });
