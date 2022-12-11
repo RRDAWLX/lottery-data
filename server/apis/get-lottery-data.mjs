@@ -1,4 +1,4 @@
-import { query } from '../../db/index.mjs';
+import { query } from '../db/index.mjs';
 
 export default async function (ctx) {
   let  { lotteryType } = ctx.params;

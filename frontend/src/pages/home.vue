@@ -8,5 +8,10 @@
 <script>
 export default {
   name: 'home',
+
+  async created () {
+    let res = await fetch('/api/getLotteryData/unionLotto');
+    console.log(await res.json());
+  },
 }
 </script>

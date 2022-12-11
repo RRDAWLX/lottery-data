@@ -1,6 +1,6 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import { insert } from '../../db/index.mjs';
+import { insert } from '../db/index.mjs';
 
 export default async function (ctx) {
   let superLottoData = await crawlSuperLotto();
