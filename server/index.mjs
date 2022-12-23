@@ -1,5 +1,5 @@
 import Koa from 'koa';
-import apiRouter from './apis/index.mjs';
+import apiRouter from './api/index.mjs';
 
 const app = new Koa();
 
