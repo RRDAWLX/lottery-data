@@ -21,8 +21,8 @@
 <script setup>
 import { shallowRef, ref, computed } from '@vue/reactivity'
 import { ElMessage } from 'element-plus'
-import NumberBarChart from '../components/number-bar-chart.vue'
-import UpdateButton from '../components/update-button.vue'
+import NumberBarChart from '@/components/number-bar-chart.vue'
+import UpdateButton from '@/components/update-button.vue'
 
 let list = shallowRef([])
 let loading = ref(false)
