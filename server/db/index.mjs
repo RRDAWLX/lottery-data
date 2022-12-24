@@ -42,5 +42,5 @@ export async function insert(lotteryType, dataArr) {
   }
 
   dbArr.sort((a, b) => a.issue - b.issue);
-  await fse.writeJSON(dbPath, db);
+  await fse.writeJSON(dbPath, db, { spaces: 2 });
 };
