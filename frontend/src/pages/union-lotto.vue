@@ -1,4 +1,7 @@
 <template>
+  <div>最大可能组合：{{ probability.max.join(' ') }}</div>
+  <div>最小可能组合：{{ probability.min.join(' ') }}</div>
+  
   <number-bar-chart title="普通号码" :x-labels="xLabels1" :data="chartData1" />
   <number-bar-chart title="特别号码" :x-labels="xLabels2" :data="chartData2" />
   
@@ -92,5 +95,25 @@ let chartData2 = computed(() => {
   let numberStatistics = new Array(16).fill(0)
   list.value.forEach(({ numbers }) => numberStatistics[numbers[6] - 1]++)
   return numberStatistics
+})
+
+let probability = computed(() => {
+  let numbers1 = chartData1.value.map((count, idx) => ({ number: idx + 1, count }))
+  numbers1.sort((a, b) => a.count - b.count)
+  let numbers2 = chartData2.value.map((count, idx) => ({ number: idx + 1, count }))
+  numbers2.sort((a, b) => a.count - b.count)
+
+  let minPart1 = numbers1.slice(0, 6).map(({ number }) => number.toString().padStart(2, '0'))
+  minPart1.sort()
+  let minPart2 = numbers2.slice(0, 1).map(({ number }) => number.toString().padStart(2, '0'))
+
+  let maxPart1 = numbers1.slice(-6).map(({ number }) => number.toString().padStart(2, '0'))
+  maxPart1.sort()
+  let maxPart2 = numbers2.slice(-1).map(({ number }) => number.toString().padStart(2, '0'))
+
+  return {
+    min: [...minPart1, ...minPart2],
+    max: [...maxPart1, ...maxPart2],
+  }
 })
 </script>
