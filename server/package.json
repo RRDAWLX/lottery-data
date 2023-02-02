@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.mjs",
   "scripts": {
-    "dev": "nodemon ./index.mjs"
+    "dev": "nodemon ./index.mjs --ignore db/db.json"
   },
   "author": "",
   "license": "ISC",
