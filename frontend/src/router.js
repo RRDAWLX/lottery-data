@@ -13,6 +13,11 @@ const router = createRouter({
       path: '/super-lotto',
       component: () => import('./pages/super-lotto.vue'),
     },
+    {
+      name: 'default',
+      path: '/:path(.*)',
+      redirect: 'union-lotto',
+    },
   ],
 });
 
