@@ -7,7 +7,7 @@
   
   <el-table :data="list" v-loading="loading">
     <el-table-column prop="date" label="日期" />
-    <el-table-column prop="issue" label="期号" sortable />
+    <el-table-column prop="issue" label="期号" sortable :sort-orders="['descending', 'ascending']" />
     <el-table-column label="号码" v-slot="{ row: { numbers } }">
       {{ numbers.slice(0, 6).map(num => num.toString().padStart(2, '0')).join(' ') }}
       |
