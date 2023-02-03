@@ -6,9 +6,9 @@
   <number-bar-chart title="特别号码" :x-labels="xLabels2" :data="chartData2" />
   
   <el-table :data="list" v-loading="loading">
-    <el-table-column prop="date" label="日期" />
-    <el-table-column prop="issue" label="期号" sortable :sort-orders="['descending', 'ascending']" />
-    <el-table-column label="号码" v-slot="{ row: { numbers } }">
+    <el-table-column prop="date" label="日期" align="center" />
+    <el-table-column prop="issue" label="期号" align="center" sortable :sort-orders="['descending', 'ascending']" />
+    <el-table-column label="号码" align="center" v-slot="{ row: { numbers } }">
       {{ numbers.slice(0, 5).map(num => num.toString().padStart(2, '0')).join(' ') }}
       |
       {{ numbers.slice(5).map(num => num.toString().padStart(2, '0')).join(' ') }}
