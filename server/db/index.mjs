@@ -10,7 +10,13 @@ let issueSets = null;
 
 async function initDB () {
   if (!db) {
-    db = await fse.readJSON(dbPath);
+    const rawDB = await fse.readJSON(dbPath);
+
+    db = Object.entries(rawDB).reduce((map, [lotteryType, dataArr]) => {
+      map[lotteryType] = dataArr.map(item => JSON.parse(item));
+      return map;
+    }, {});
+    
     issueSets = Object.entries(db)
       .reduce((map, [lotteryType, dataArr]) => {
         map[lotteryType] = new Set(dataArr.map(item => item.issue));
@@ -42,5 +48,11 @@ export async function insert(lotteryType, dataArr) {
   }
 
   dbArr.sort((a, b) => a.issue - b.issue);
-  await fse.writeJSON(dbPath, db, { spaces: 2 });
+
+  const rawDB = {};
+  Object.entries(db).forEach(([lotteryType, dataArr]) => {
+    rawDB[lotteryType] = dataArr.map(item => JSON.stringify(item));
+  });
+
+  await fse.writeJSON(dbPath, rawDB, { spaces: 2 });
 };
