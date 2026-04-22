@@ -1,4 +1,5 @@
 <template>
+  <prediction-panel lottery-type="superLotto" :ordinary-count="5" />
   <div>最大可能组合：{{ probability.max.join(' ') }}</div>
   <div>最小可能组合：{{ probability.min.join(' ') }}</div>
 
@@ -23,6 +24,7 @@ import { shallowRef, ref, computed } from '@vue/reactivity'
 import { ElMessage } from 'element-plus'
 import NumberBarChart from '@/components/number-bar-chart.vue'
 import UpdateButton from '@/components/update-button.vue'
+import PredictionPanel from '@/components/prediction-panel.vue'
 
 let list = shallowRef([])
 let loading = ref(false)
@@ -117,7 +119,7 @@ let probability = computed(() => {
   let maxPart1 = numbers1.slice(-5).map(({ number }) => number.toString().padStart(2, '0'))
   maxPart1.sort()
   let maxPart2 = numbers2.slice(-2).map(({ number }) => number.toString().padStart(2, '0'))
-  minPart2.sort()
+  maxPart2.sort()
   
   return {
     min: [...minPart1, ...minPart2],

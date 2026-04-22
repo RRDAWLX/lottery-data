@@ -1,4 +1,5 @@
 <template>
+  <prediction-panel lottery-type="unionLotto" :ordinary-count="6" />
   <div>最大可能组合：{{ probability.max.join(' ') }}</div>
   <div>最小可能组合：{{ probability.min.join(' ') }}</div>
   
@@ -23,6 +24,7 @@ import { shallowRef, ref, computed } from '@vue/reactivity'
 import { ElMessage } from 'element-plus'
 import NumberBarChart from '@/components/number-bar-chart.vue'
 import UpdateButton from '@/components/update-button.vue'
+import PredictionPanel from '@/components/prediction-panel.vue'
 
 let list = shallowRef([])
 let loading = ref(false)
