@@ -47,11 +47,11 @@ Flask app (Python, managed by uv). Runs independently, starts training on startu
 **Observer pattern:** `observers` is a dict keyed by `observerId`. `notify_observers()` pushes events to all observer queues. SSE endpoint creates a `queue.Queue` per connection; on disconnect, removes itself only if the queue hasn't been replaced.
 
 **Model files:**
-- `model/transformer.py` — Custom Transformer (`nn.TransformerEncoder` + per-position output heads). Input: `(batch, n_periods, 7)`. Output: list of 7 logit tensors (ordinary heads output `ordinary_range` classes, special heads output `special_range` classes).
-- `model/dataset.py` — `LotteryDataset` wrapping sliding-window samples
-- `model/trainer.py` — training loop with incremental support (loads existing `model_state_dict`)
-- `data/processor.py` — loads `db.json`, creates sliding windows, incremental window detection, greedy decoding
-- `train.py` — orchestrates training (full/incremental auto-detect) and prediction. `run_training()`, `run_prediction()`, checkpoint management.
+- `model/lottery_gpt2.py` — GPT-2 model adapter: `build_gpt2_config()`, `create_model()`, `load_model_from_checkpoint()`, `save_model()`, plus token constants (`PAD_TOKEN=0, BOS_TOKEN=1, EOS_TOKEN=2, NUM_OFFSET=2, VOCAB_SIZE=39`) and mapping functions (`number_to_token`, `token_to_number`)
+- `model/dataset.py` — `LotteryLMDataset` (LM-style input_ids/labels) + `collate_fn` (dynamic padding, attention_mask, label masking with -100)
+- `model/trainer.py` — training loop using `GPT2LMHeadModel` built-in loss, `AdamW` optimizer, incremental support (loads existing checkpoint)
+- `data/processor.py` — loads `db.json`, serializes numbers to token sequences (`serialize_period`), builds LM training samples (`build_lm_samples`/`build_incremental_lm_samples`), lottery config
+- `train.py` — orchestrates training (full/incremental auto-detect) and autoregressive prediction (generates tokens one-by-one with masked greedy for ordinary numbers). `run_training()`, `run_prediction()`, checkpoint management.
 - `checkpoint/<lotteryType>/model.pt` — model weights
 - `checkpoint/<lotteryType>/latest.json` — training state (`n`, `latest_trained_issue`, `total_periods_used`, `model_updated_at`)
 
@@ -119,5 +119,6 @@ Vue 3 + Vite + Element Plus + ECharts (via `vue-echarts`). `@` alias → `src/`.
 - `assets/` contains static images (`ordinary-numbers.png`, `special-numbers.png`).
 - llm-prediction is fully decoupled from server — it runs as a standalone Flask service and uses observer pattern (dict keyed by observerId) for SSE notifications.
 - server auto-reconnects to llm-prediction SSE every 2s on disconnect, using a stable observerId to prevent duplicate observers.
-- Model output is a list of per-position logit tensors (not a stacked tensor), because ordinary and special heads have different output dimensions.
+- Model is a GPT-2 Decoder-only (`GPT2LMHeadModel`). Output is next-token logits over `VOCAB_SIZE=39`. Prediction uses autoregressive generation with masked greedy decoding (ordinary number dedup).
 - `config.json` `prediction.port` (5006) is used by both llm-prediction (Flask) and server (HTTP/SSE client).
+- llm-prediction depends on `transformers` (HuggingFace) for the GPT-2 model architecture.

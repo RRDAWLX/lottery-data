@@ -2,7 +2,7 @@
 
 ## 1. 功能需求
 
-- 基于历史中奖数据，使用自定义 Transformer 架构训练模型，预测下一期中奖号码
+- 基于历史中奖数据，使用 GPT-2 Decoder-only 架构训练模型，预测下一期中奖号码
 - 两种彩票（unionLotto / superLotto）各自独立训练专有模型
 - 模型训练触发时机：
   - 首次启动：模型不存在 → 从零训练（全部数据）
@@ -22,7 +22,7 @@ lottery-data/
 ├── server/                  # Koa 后端
 ├── llm-prediction/          # Python 模型服务（独立进程）
 │   ├── model/
-│   │   ├── transformer.py   # 自定义 Transformer 架构
+│   │   ├── lottery_gpt2.py  # GPT-2 模型适配层（token 映射、config 构建、模型创建/加载）
 │   │   ├── dataset.py       # 数据集定义
 │   │   └── trainer.py       # 训练器
 │   ├── data/
@@ -99,36 +99,52 @@ n=5，总共 T=7 期数据:
 
 ### 4.2 数据编码
 
+Token 映射：
+
 ```
-单期号码 [5, 15, 25, 26, 33, 6, 11]
-  ↓ Embedding层 (每个号码映射为向量)
-  ↓ + 期内位置编码 (号码在期内的位置 0~6)
-  ↓ + 期数位置编码 (第几期)
-  ↓ + 类型编码 (普通号 or 特别号)
-  ↓ 7个向量，代表这一期
+PAD_TOKEN = 0
+BOS_TOKEN = 1
+EOS_TOKEN = 2
+号码 → token: number_to_token(num) = num + 2
+token → 号码: token_to_number(tok) = tok - 2
+词表大小 VOCAB_SIZE = 39 (0~2 特殊 + 3~38 号码)
 ```
+
+单期号码序列化：
+
+```
+[5, 15, 25, 26, 33, 6, 11]
+  → [BOS, 7, 17, 27, 28, 35, 8, 13, EOS]
+```
+
+多期拼接为长序列：`BOS n₁ n₂ ... n₇ EOS BOS n₁ n₂ ... n₇ EOS ...`
 
 ### 4.3 模型输入/输出
 
+GPT-2 语言模型范式（next-token prediction）：
+
 ```
-输入: n期号码，每期7个 → shape: (batch, n, 7)
-  ↓ Embedding + 位置编码 + 类型编码 → (batch, n*7, embed_dim)
-  ↓ Transformer Encoder
-  ↓ 取最后7个token的输出
-输出: 每个号码位置独立的 logits 列表
-  普通号位置 i: logits[i] 长度为 ordinary_range (33 or 35)
-  特别号位置 i: logits[i] 长度为 special_range (16 or 12)
+输入: context 期 token 序列 + 目标期 BOS + n₁ n₂ ...
+标签: 左偏移 1 位，context 部分置 -100（不计算 loss），目标部分为下一个 token
+
+例: n=2, 序列 [BOS a₁...a₇ EOS BOS b₁...b₇ EOS BOS c₁]
+    input_ids = [BOS a₁...a₇ EOS BOS b₁...b₇ EOS BOS c₁]
+    labels    = [-100 -100...-100 -100  b₁...b₇ EOS BOS  c₂]  (context 部分全 -100)
+
+模型输出: next-token logits, shape (batch, seq_len, VOCAB_SIZE=39)
 ```
 
 ### 4.4 普通号去重约束
 
-贪心解码，保证普通号不重复：
+自回归生成中的 masked greedy 解码：
 
 ```
-位置1: 取概率最高的 a₁
-位置2: mask掉 a₁，取剩余概率最高的 a₂
-位置3: mask掉 a₁,a₂，取剩余概率最高的 a₃
-...最后排序输出
+输入: n 期 context + BOS → 逐步生成
+步骤1: 取 logits，mask 掉非普通号 token → argmax → 得 a₁
+步骤2: 取 logits，mask 掉 a₁ 对应 token → argmax → 得 a₂
+...
+普通号部分: 去重 mask，排序输出
+特别号部分: 直接 argmax（不去重）
 ```
 
 ## 5. 两种彩票独立模型
@@ -138,8 +154,7 @@ n=5，总共 T=7 期数据:
 | 普通号 | 6个 (1-33) | 5个 (1-35) |
 | 特别号 | 1个 (1-16) | 2个 (1-12) |
 | 每期号码数 | 7 | 7 |
-| 普通号 logits 维度 | 33 | 35 |
-| 特别号 logits 维度 | 16 | 12 |
+| 词表大小 | 39 | 39 |
 | 独立模型 | 有 | 有 |
 
 ## 6. 配置管理
@@ -154,11 +169,16 @@ config.json 统一管理：
     "port": 5006,
     "n": 10,
     "model_config": {
-      "embed_dim": 64,
-      "num_heads": 4,
-      "num_layers": 4,
-      "ff_dim": 256,
-      "dropout": 0.1
+      "vocab_size": 39,
+      "n_positions": 128,
+      "n_embd": 64,
+      "n_head": 4,
+      "n_layer": 4,
+      "n_inner": 256,
+      "resid_pdrop": 0.1,
+      "embd_pdrop": 0.1,
+      "attn_pdrop": 0.1,
+      "activation_function": "gelu-new"
     },
     "training_config": {
       "epochs": 50,
@@ -198,7 +218,7 @@ n 改变后删除模型，重新从零训练。
 | 语言 | Python 3.13+ |
 | 包管理 | uv |
 | 深度学习框架 | PyTorch |
-| Transformer | 自定义架构（PyTorch nn.TransformerEncoder） |
+| Transformer | GPT-2（HuggingFace Transformers） |
 | 模型服务 | Flask |
 | 事件推送 | SSE（观察者模式 + observerId 去重） |
 | 后端 | Koa + koa-bodyparser |

@@ -9,11 +9,16 @@
     "port": 5006,
     "n": 10,
     "model_config": {
-      "embed_dim": 64,
-      "num_heads": 4,
-      "num_layers": 4,
-      "ff_dim": 256,
-      "dropout": 0.1
+      "vocab_size": 39,
+      "n_positions": 128,
+      "n_embd": 64,
+      "n_head": 4,
+      "n_layer": 4,
+      "n_inner": 256,
+      "resid_pdrop": 0.1,
+      "embd_pdrop": 0.1,
+      "attn_pdrop": 0.1,
+      "activation_function": "gelu_new"
     },
     "training_config": {
       "epochs": 50,
