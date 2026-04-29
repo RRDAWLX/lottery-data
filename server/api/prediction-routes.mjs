@@ -32,14 +32,17 @@ router.post('/trainModel/:lotteryType', async (ctx) => {
 });
 
 router.get('/predictionSSE', async (ctx) => {
+  ctx.status = 200;
   ctx.set('Content-Type', 'text/event-stream');
   ctx.set('Cache-Control', 'no-cache');
   ctx.set('Connection', 'keep-alive');
+  ctx.respond = false;
 
   const sendEvent = (lotteryType, status, prediction) => {
     ctx.res.write(`data: ${JSON.stringify({ lotteryType, status, prediction })}\n\n`);
   };
   emitter.on('status', sendEvent);
+  ctx.res.write(`data: ${JSON.stringify({ connected: true })}\n\n`);
   ctx.req.on('close', () => {
     emitter.off('status', sendEvent);
   });

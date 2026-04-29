@@ -74,8 +74,13 @@ def train_in_background(lottery_type, force_full=False):
     try:
         model = run_training(lottery_type, force_full=force_full)
         if model is None:
-            training_status[lottery_type] = 'error'
-            notify_observers(lottery_type, 'error')
+            prediction = run_prediction(lottery_type)
+            if prediction is not None:
+                training_status[lottery_type] = 'ready'
+                notify_observers(lottery_type, 'ready', prediction)
+            else:
+                training_status[lottery_type] = 'error'
+                notify_observers(lottery_type, 'error')
             return
 
         prediction = run_prediction(lottery_type)
