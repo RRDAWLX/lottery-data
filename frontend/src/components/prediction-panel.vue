@@ -120,6 +120,13 @@ onUnmounted(() => {
   }
 })
 
+function setTraining() {
+  status.value = 'training'
+  prediction.value = null
+}
+
+defineExpose({ setTraining })
+
 watch(() => props.lotteryType, () => {
   fetchData()
 })

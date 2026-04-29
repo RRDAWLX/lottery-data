@@ -1,5 +1,5 @@
 <template>
-  <prediction-panel lottery-type="unionLotto" :ordinary-count="6" />
+  <prediction-panel ref="predictionPanelRef" lottery-type="unionLotto" :ordinary-count="6" />
   <div>最大可能组合：{{ probability.max.join(' ') }}</div>
   <div>最小可能组合：{{ probability.min.join(' ') }}</div>
   
@@ -51,6 +51,8 @@ let fetchData = async () => {
 
 fetchData()
 
+let predictionPanelRef = ref(null)
+
 let updateData = async () => {
   loading.value = true
   
@@ -63,6 +65,7 @@ let updateData = async () => {
         }
       })
 
+    predictionPanelRef.value?.setTraining()
     await fetchData()
     ElMessage({
       message: '更新数据成功',
